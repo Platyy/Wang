@@ -2,8 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Wang : MonoBehaviour {
-    
+public class Wang : MonoBehaviour
+{
+
     public List<GameObject> m_Prefabs;
 
     private Vector2 m_NorthPos, m_EastPos, m_SouthPos, m_WestPos;
@@ -17,16 +18,16 @@ public class Wang : MonoBehaviour {
     private int m_LineCount = 0;
 
     #region ColorDirections
-    private int[] BlueWest   = { 1, 3,  5,  7,  9,  11, 13, 15 };
-    private int[] BlueEast   = { 1, 2,  3,  4,  9,  10, 11, 12 };
-    private int[] YellowWest = { 2, 4,  6,  8,  10, 12, 14, 16 };
-    private int[] YellowEast = { 5, 6,  7,  8,  13, 14, 15, 16 };
-    private int[] RedNorth   = { 1, 2,  3,  4,  5,  6,  7,   8 };
-    private int[] RedSouth   = { 1, 2,  5,  6,  9,  10, 13, 14 };
+    private int[] BlueWest   = { 1,  3,  5,  7,  9, 11, 13, 15 };
+    private int[] BlueEast   = { 1,  2,  3,  4,  9, 10, 11, 12 };
+    private int[] YellowWest = { 2,  4,  6,  8, 10, 12, 14, 16 };
+    private int[] YellowEast = { 5,  6,  7,  8, 13, 14, 15, 16 };
+    private int[] RedNorth   = { 1,  2,  3,  4,  5,  6,  7,  8 };
+    private int[] RedSouth   = { 1,  2,  5,  6,  9, 10, 13, 14 };
     private int[] GreenNorth = { 9, 10, 11, 12, 13, 14, 15, 16 };
-    private int[] GreenSouth = { 3, 4,  7,  8,  11, 12, 15, 16 };
+    private int[] GreenSouth = { 3,  4,  7,  8, 11, 12, 15, 16 };
 
-    private int[] BlueGreen   = { 3, 7, 11, 15 };
+    private int[] BlueGreen   = { 3, 7, 11, 15 }; // west & south
     private int[] BlueRed     = { 1, 5,  9, 13 };
     private int[] YellowGreen = { 4, 8, 12, 16 };
     private int[] YellowRed   = { 2, 6, 10, 14 };
@@ -65,23 +66,24 @@ public class Wang : MonoBehaviour {
         return SouthColor;
     }
 
-    void Start () {
+    void Start()
+    {
         #region Pos&Color
         m_NorthPos = new Vector2(5, 8);
         m_EastPos  = new Vector2(8, 5);
         m_SouthPos = new Vector2(5, 3);
         m_WestPos  = new Vector2(3, 5);
-        
-        m_Red = new Color(1, 0, 0, 1);
-        m_Green = new Color(0, 1, 0, 1);
-        m_Blue = new Color(0, 0, 1, 1);
+
+        m_Red    = new Color(1, 0, 0, 1);
+        m_Green  = new Color(0, 1, 0, 1);
+        m_Blue   = new Color(0, 0, 1, 1);
         m_Yellow = new Color(1, 0.9490196f, 0, 1);
         #endregion
 
         m_CachedNorthTile = new Color[m_Length];
         GenerateLine();
     }
-    
+
     void GenerateLine()
     {
         //Create the first object
@@ -170,7 +172,7 @@ public class Wang : MonoBehaviour {
             }
         }
         m_LineCount = 1;
-        for(int i = 0; i < m_Length; i++)
+        for (int i = 1; i < m_Length; i++)
             NewLine();
     }
 
@@ -178,11 +180,11 @@ public class Wang : MonoBehaviour {
     {
         m_FoundFirst = false;
         m_FoundCount = 0;
-        for(int i = 0; i < m_Length; i++)
+        for (int i = 0; i < m_Length; i++)
         {
-            if(!m_FoundFirst)
+            if (!m_FoundFirst)
             {
-                if(m_CachedNorthTile[i] == m_Red)
+                if (m_CachedNorthTile[i] == m_Red)
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 7));
                     int pos = (RedSouth[selected]) - 1;
@@ -194,9 +196,10 @@ public class Wang : MonoBehaviour {
                     go.transform.localScale = new Vector3(-1, 1, 1);
                     m_FoundCount++;
                     m_CachedNorthTile[i] = GetNorth(go);
+                    m_PrevColor = GetEast(go);
                     m_FoundFirst = true;
                 }
-                else if(m_CachedNorthTile[i] == m_Green)
+                else if (m_CachedNorthTile[i] == m_Green)
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 7));
                     int pos = (GreenSouth[selected]) - 1;
@@ -208,11 +211,12 @@ public class Wang : MonoBehaviour {
                     go.transform.localScale = new Vector3(-1, 1, 1);
                     m_FoundCount++;
                     m_CachedNorthTile[i] = GetNorth(go);
+                    m_PrevColor = GetEast(go);
                     m_FoundFirst = true;
                 }
                 continue;
             }
-            if(m_PrevColor == m_Blue && m_FoundFirst)
+            if (m_PrevColor == m_Blue && m_FoundFirst)
             {
                 if (m_CachedNorthTile[i] == m_Red)
                 {
@@ -231,7 +235,7 @@ public class Wang : MonoBehaviour {
                     m_FoundCount++;
                     continue;
                 }
-                else if(m_CachedNorthTile[i] == m_Green)
+                else if (m_CachedNorthTile[i] == m_Green)
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 3));
                     int pos = (BlueGreen[selected]) - 1;
@@ -249,7 +253,7 @@ public class Wang : MonoBehaviour {
                     continue;
                 }
             }
-            else if(m_PrevColor == m_Yellow && m_FoundFirst)
+            else if (m_PrevColor == m_Yellow && m_FoundFirst)
             {
                 if (m_CachedNorthTile[i] == m_Red)
                 {
