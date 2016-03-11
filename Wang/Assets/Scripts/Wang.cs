@@ -7,7 +7,7 @@ public class Wang : MonoBehaviour
 
     public List<GameObject> m_Prefabs;
 
-    private Vector2 m_NorthPos, m_EastPos, m_SouthPos, m_WestPos;
+    private static Vector2 m_NorthPos, m_EastPos, m_SouthPos, m_WestPos;
 
     private static Color m_Red, m_Green, m_Blue, m_Yellow;
 
@@ -86,11 +86,7 @@ public class Wang : MonoBehaviour
 
     void GenerateLine()
     {
-        //Create the first object
-        Instantiate(m_Prefabs[0]);
-        //Get the first objects' east color
-        m_PrevColor = GetEast(m_Prefabs[0]);
-        m_CachedNorthTile[0] = GetNorth(m_Prefabs[0]);
+        MakeBlock(0, 0);
         for (int i = 1; i < m_Length; i++)
         {
             // Check if a new object after the first has been created
@@ -100,37 +96,23 @@ public class Wang : MonoBehaviour
                 if (m_PrevColor == m_Blue && !m_FoundFirst)
                 {
                     // Blue west
-                    m_FoundCount++;
                     // get random int (0-7)
                     int selected = Mathf.RoundToInt(Random.Range(0, 7));
                     // Choose from pool of tiles with a blue west from random int
                     int pos = (BlueWest[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                            m_Prefabs[pos].transform.position.y,
-                                                            m_Prefabs[pos].transform.position.z),
-                                                            m_Prefabs[pos].transform.rotation);
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-
-
-                    m_PrevColor = GetEast(go);
-                    m_CachedNorthTile[i] = GetNorth(go);
+                    if(pos != -1)
+                        MakeBlock(pos, i);
+                    
                     m_FoundFirst = true;
                 }
                 //Check if init east color is yellow
                 else if (m_PrevColor == m_Yellow && !m_FoundFirst)
                 {
                     //Yellow West
-                    m_FoundCount++;
                     int selected = Mathf.RoundToInt(Random.Range(0, 7));
                     int pos = (YellowWest[selected]) - 1;
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                            m_Prefabs[pos].transform.position.y,
-                                                            m_Prefabs[pos].transform.position.z),
-                                                            m_Prefabs[pos].transform.rotation);
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-                    m_PrevColor = GetEast(go);
-                    m_CachedNorthTile[i] = GetNorth(go);
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     m_FoundFirst = true;
                 }
                 continue;
@@ -139,35 +121,19 @@ public class Wang : MonoBehaviour
             // Check West of current vs west of prev
             if (m_PrevColor == m_Blue && m_FoundFirst)
             {
-                m_FoundCount++;
                 int selected = Mathf.RoundToInt(Random.Range(0, 7));
                 int pos = (BlueWest[selected]) - 1;
-
-                GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                        m_Prefabs[pos].transform.position.y,
-                                                        m_Prefabs[pos].transform.position.z),
-                                                        m_Prefabs[pos].transform.rotation);
-
-                go.transform.localScale = new Vector3(-1, 1, 1);
-
-                m_PrevColor = GetEast(go);
-                m_CachedNorthTile[i] = GetNorth(go);
+                if (pos != -1)
+                    MakeBlock(pos, i);
                 continue;
             }
             else if (m_PrevColor == m_Yellow && m_FoundFirst)
             {
-                m_FoundCount++;
+                //m_FoundCount++;
                 int selected = Mathf.RoundToInt(Random.Range(0, 7));
                 int pos = (YellowWest[selected]) - 1;
-                GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                        m_Prefabs[pos].transform.position.y,
-                                                        m_Prefabs[pos].transform.position.z),
-                                                        m_Prefabs[pos].transform.rotation);
-
-                go.transform.localScale = new Vector3(-1, 1, 1);
-
-                m_PrevColor = GetEast(go);
-                m_CachedNorthTile[i] = GetNorth(go);
+                if (pos != -1)
+                    MakeBlock(pos, i);
                 continue;
             }
         }
@@ -188,30 +154,16 @@ public class Wang : MonoBehaviour
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 7));
                     int pos = (RedSouth[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                           m_Prefabs[pos].transform.position.y,
-                                                           m_Prefabs[pos].transform.position.z - m_LineCount),
-                                                           m_Prefabs[pos].transform.rotation);
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-                    m_FoundCount++;
-                    m_CachedNorthTile[i] = GetNorth(go);
-                    m_PrevColor = GetEast(go);
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     m_FoundFirst = true;
                 }
                 else if (m_CachedNorthTile[i] == m_Green)
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 7));
                     int pos = (GreenSouth[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                           m_Prefabs[pos].transform.position.y,
-                                                           m_Prefabs[pos].transform.position.z - m_LineCount),
-                                                           m_Prefabs[pos].transform.rotation);
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-                    m_FoundCount++;
-                    m_CachedNorthTile[i] = GetNorth(go);
-                    m_PrevColor = GetEast(go);
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     m_FoundFirst = true;
                 }
                 continue;
@@ -222,34 +174,16 @@ public class Wang : MonoBehaviour
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 3));
                     int pos = (BlueRed[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                                            m_Prefabs[pos].transform.position.y,
-                                                            m_Prefabs[pos].transform.position.z - m_LineCount),
-                                                            m_Prefabs[pos].transform.rotation);
-
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-
-                    m_PrevColor = GetEast(go);
-                    m_CachedNorthTile[i] = GetNorth(go);
-                    m_FoundCount++;
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     continue;
                 }
                 else if (m_CachedNorthTile[i] == m_Green)
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 3));
                     int pos = (BlueGreen[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                        m_Prefabs[pos].transform.position.y,
-                                        m_Prefabs[pos].transform.position.z - m_LineCount),
-                                        m_Prefabs[pos].transform.rotation);
-
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-
-                    m_PrevColor = GetEast(go);
-                    m_CachedNorthTile[i] = GetNorth(go);
-                    m_FoundCount++;
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     continue;
                 }
             }
@@ -259,38 +193,34 @@ public class Wang : MonoBehaviour
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 3));
                     int pos = (YellowRed[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                        m_Prefabs[pos].transform.position.y,
-                                        m_Prefabs[pos].transform.position.z - m_LineCount),
-                                        m_Prefabs[pos].transform.rotation);
-
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-
-                    m_PrevColor = GetEast(go);
-                    m_CachedNorthTile[i] = GetNorth(go);
-                    m_FoundCount++;
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     continue;
                 }
                 else if (m_CachedNorthTile[i] == m_Green)
                 {
                     int selected = Mathf.RoundToInt(Random.Range(0, 3));
                     int pos = (YellowGreen[selected]) - 1;
-
-                    GameObject go = (GameObject)Instantiate(m_Prefabs[pos], new Vector3(m_Prefabs[pos].transform.position.x + m_FoundCount,
-                                        m_Prefabs[pos].transform.position.y,
-                                        m_Prefabs[pos].transform.position.z - m_LineCount),
-                                        m_Prefabs[pos].transform.rotation);
-
-                    go.transform.localScale = new Vector3(-1, 1, 1);
-
-                    m_PrevColor = GetEast(go);
-                    m_CachedNorthTile[i] = GetNorth(go);
-                    m_FoundCount++;
+                    if (pos != -1)
+                        MakeBlock(pos, i);
                     continue;
                 }
             }
         }
         m_LineCount++;
+    }
+
+    void MakeBlock(int _position, int _cachePos)
+    {
+        m_FoundCount++;
+        GameObject go = (GameObject)Instantiate(m_Prefabs[_position], new Vector3(m_Prefabs[_position].transform.position.x + m_FoundCount,
+                                        m_Prefabs[_position].transform.position.y,
+                                        m_Prefabs[_position].transform.position.z - m_LineCount),
+                                        m_Prefabs[_position].transform.rotation);
+        go.transform.localScale = new Vector3(-1, 1, 1);
+        
+        m_PrevColor = GetEast(go);
+
+        m_CachedNorthTile[_cachePos] = GetNorth(go);
     }
 }
