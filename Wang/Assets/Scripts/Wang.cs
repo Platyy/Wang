@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))]
 public class Wang : MonoBehaviour
 {
-
+    public List<GameObject> m_Mats;
     public List<GameObject> m_Prefabs;
 
     private static Vector2 m_NorthPos, m_EastPos, m_SouthPos, m_WestPos;
@@ -97,9 +99,9 @@ public class Wang : MonoBehaviour
                 {
                     // Blue west
                     // get random int (0-7)
-                    int selected = Mathf.RoundToInt(Random.Range(0, 7));
+                    int selected = Random.Range(0, 7);
                     // Choose from pool of tiles with a blue west from random int
-                    int pos = (BlueWest[selected]) - 1;
+                    int pos = (BlueWest[selected] - 1);
                     if(pos != -1)
                         MakeBlock(pos, i);
                     
@@ -109,8 +111,8 @@ public class Wang : MonoBehaviour
                 else if (m_PrevColor == m_Yellow && !m_FoundFirst)
                 {
                     //Yellow West
-                    int selected = Mathf.RoundToInt(Random.Range(0, 7));
-                    int pos = (YellowWest[selected]) - 1;
+                    int selected = Random.Range(0, 7);
+                    int pos = (YellowWest[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     m_FoundFirst = true;
@@ -121,8 +123,8 @@ public class Wang : MonoBehaviour
             // Check West of current vs west of prev
             if (m_PrevColor == m_Blue && m_FoundFirst)
             {
-                int selected = Mathf.RoundToInt(Random.Range(0, 7));
-                int pos = (BlueWest[selected]) - 1;
+                int selected = Random.Range(0, 7);
+                int pos = (BlueWest[selected] - 1);
                 if (pos != -1)
                     MakeBlock(pos, i);
                 continue;
@@ -130,8 +132,8 @@ public class Wang : MonoBehaviour
             else if (m_PrevColor == m_Yellow && m_FoundFirst)
             {
                 //m_FoundCount++;
-                int selected = Mathf.RoundToInt(Random.Range(0, 7));
-                int pos = (YellowWest[selected]) - 1;
+                int selected = Random.Range(0, 7);
+                int pos = (YellowWest[selected] - 1);
                 if (pos != -1)
                     MakeBlock(pos, i);
                 continue;
@@ -152,16 +154,16 @@ public class Wang : MonoBehaviour
             {
                 if (m_CachedNorthTile[i] == m_Red)
                 {
-                    int selected = Mathf.RoundToInt(Random.Range(0, 7));
-                    int pos = (RedSouth[selected]) - 1;
+                    int selected = Random.Range(0, 7);
+                    int pos = (RedSouth[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     m_FoundFirst = true;
                 }
                 else if (m_CachedNorthTile[i] == m_Green)
                 {
-                    int selected = Mathf.RoundToInt(Random.Range(0, 7));
-                    int pos = (GreenSouth[selected]) - 1;
+                    int selected = Random.Range(0, 7);
+                    int pos = (GreenSouth[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     m_FoundFirst = true;
@@ -172,16 +174,16 @@ public class Wang : MonoBehaviour
             {
                 if (m_CachedNorthTile[i] == m_Red)
                 {
-                    int selected = Mathf.RoundToInt(Random.Range(0, 3));
-                    int pos = (BlueRed[selected]) - 1;
+                    int selected = Random.Range(0, 3);
+                    int pos = (BlueRed[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     continue;
                 }
                 else if (m_CachedNorthTile[i] == m_Green)
                 {
-                    int selected = Mathf.RoundToInt(Random.Range(0, 3));
-                    int pos = (BlueGreen[selected]) - 1;
+                    int selected = Random.Range(0, 3);
+                    int pos = (BlueGreen[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     continue;
@@ -191,16 +193,16 @@ public class Wang : MonoBehaviour
             {
                 if (m_CachedNorthTile[i] == m_Red)
                 {
-                    int selected = Mathf.RoundToInt(Random.Range(0, 3));
-                    int pos = (YellowRed[selected]) - 1;
+                    int selected = Random.Range(0, 3);
+                    int pos = (YellowRed[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     continue;
                 }
                 else if (m_CachedNorthTile[i] == m_Green)
                 {
-                    int selected = Mathf.RoundToInt(Random.Range(0, 3));
-                    int pos = (YellowGreen[selected]) - 1;
+                    int selected = Random.Range(0, 4);
+                    int pos = (YellowGreen[selected] - 1);
                     if (pos != -1)
                         MakeBlock(pos, i);
                     continue;
@@ -208,6 +210,9 @@ public class Wang : MonoBehaviour
             }
         }
         m_LineCount++;
+        if(m_LineCount == m_Length)
+            Combine();
+        
     }
 
     void MakeBlock(int _position, int _cachePos)
@@ -218,9 +223,50 @@ public class Wang : MonoBehaviour
                                         m_Prefabs[_position].transform.position.z - m_LineCount),
                                         m_Prefabs[_position].transform.rotation);
         go.transform.localScale = new Vector3(-1, 1, 1);
-        
-        m_PrevColor = GetEast(go);
 
+        go.transform.SetParent(m_Mats[_position].transform);
+
+        m_PrevColor = GetEast(go);
         m_CachedNorthTile[_cachePos] = GetNorth(go);
+    }
+
+    void Combine()
+    {
+        for (int i = 0; i < m_Mats.Capacity; i++)
+        {
+            Vector3 position = m_Mats[i].transform.position;
+            m_Mats[i].transform.position = Vector3.zero;
+
+            MeshFilter[] _meshFilters = m_Mats[i].GetComponentsInChildren<MeshFilter>();
+            CombineInstance[] _combine = new CombineInstance[_meshFilters.Length];
+            for(int j = 0; j < _meshFilters.Length; j++)
+            {
+                _combine[j].mesh = _meshFilters[j].sharedMesh;
+                _combine[j].transform = _meshFilters[j].transform.localToWorldMatrix;
+                _meshFilters[j].gameObject.SetActive(false);
+            }
+
+            while(_combine.Length > 2000)
+            {
+                GameObject SplitInstance = (GameObject)Instantiate(m_Mats[i]);
+                SplitInstance.transform.SetParent(m_Mats[i].transform);
+                CombineInstance[] _temp = new CombineInstance[_combine.Length - 2000];
+                CombineInstance[] _splitCombine = new CombineInstance[2000];
+                System.Array.ConstrainedCopy(_combine, 0, _splitCombine, 0, 2000);
+                System.Array.ConstrainedCopy(_combine, 2000, _temp, 0, _temp.Length);
+                _combine = _temp;
+
+                SplitInstance.GetComponent<MeshFilter>().mesh = new Mesh();
+                SplitInstance.GetComponent<MeshFilter>().mesh.CombineMeshes(_splitCombine);
+                SplitInstance.SetActive(true);
+            }
+
+            m_Mats[i].GetComponent<MeshFilter>().mesh = new Mesh();
+            m_Mats[i].GetComponent<MeshFilter>().mesh.CombineMeshes(_combine);
+
+            m_Mats[i].SetActive(true);
+
+            m_Mats[i].transform.position = position;
+        }
     }
 }
