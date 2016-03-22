@@ -68,6 +68,15 @@ public class Wang : MonoBehaviour
         return SouthColor;
     }
 
+    void Awake()
+    {
+        for(int i = 0; i < m_Mats.Count; i++)
+        {
+            GameObject go = (GameObject)Instantiate(m_Mats[i]);
+            go.transform.SetParent(transform);
+        }
+    }
+
     void Start()
     {
         #region Pos&Color
@@ -210,8 +219,12 @@ public class Wang : MonoBehaviour
             }
         }
         m_LineCount++;
-        if(m_LineCount == m_Length)
+        if (m_LineCount == m_Length)
+        {
             Combine();
+            
+        }
+
         
     }
 
@@ -246,14 +259,14 @@ public class Wang : MonoBehaviour
                 _meshFilters[j].gameObject.SetActive(false);
             }
 
-            while(_combine.Length > 2000)
+            while(_combine.Length > 2048)
             {
                 GameObject SplitInstance = (GameObject)Instantiate(m_Mats[i]);
                 SplitInstance.transform.SetParent(m_Mats[i].transform);
-                CombineInstance[] _temp = new CombineInstance[_combine.Length - 2000];
-                CombineInstance[] _splitCombine = new CombineInstance[2000];
-                System.Array.ConstrainedCopy(_combine, 0, _splitCombine, 0, 2000);
-                System.Array.ConstrainedCopy(_combine, 2000, _temp, 0, _temp.Length);
+                CombineInstance[] _temp = new CombineInstance[_combine.Length - 2048];
+                CombineInstance[] _splitCombine = new CombineInstance[2048];
+                System.Array.ConstrainedCopy(_combine, 0, _splitCombine, 0, 2048);
+                System.Array.ConstrainedCopy(_combine, 2048, _temp, 0, _temp.Length);
                 _combine = _temp;
 
                 SplitInstance.GetComponent<MeshFilter>().mesh = new Mesh();
@@ -268,5 +281,6 @@ public class Wang : MonoBehaviour
 
             m_Mats[i].transform.position = position;
         }
+        AstarPath.active.Scan();
     }
 }
