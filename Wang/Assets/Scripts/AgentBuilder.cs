@@ -59,23 +59,19 @@ public class AgentBuilder : MonoBehaviour {
 
     CharacterController m_Controller;
 
+    [SerializeField]
+    Wang m_WangObject;
+
     AILerp m_MyLerp;
 
-    float m_Radius;
-    float m_NextWaypointDist = 3f;
     public float m_Speed = 100f;
 
-    int m_CurrentWaypoint = 0;
-
-
-    public GameObject m_Mat;
+    Transform m_RDPTile;
 
     Vector3 m_RDP;
     
     bool m_Found = false;
     bool m_RDPPlaced = false;
-
-    List<int> m_Used;
 
     void Start()
     {
@@ -88,20 +84,22 @@ public class AgentBuilder : MonoBehaviour {
     {
         while(!m_Found)
         {
-            Vector3 _found = FindNearest();
-            if (_found != Vector3.zero)
+            int[] _matsToFind = new int[] { 4, 7, 10, 13 };
+            GameObject _found = m_WangObject.FindNearest(transform.position, _matsToFind);
+            if (_found != null)
             {
-                m_RDP = _found;
-                m_Seeker.StartPath(transform.position, _found, OnPathComplete);
+                m_RDP = _found.transform.position;
+                m_Seeker.StartPath(transform.position, _found.transform.position, OnPathComplete);
                 m_Found = true;
+                m_RDPTile = _found.transform;
                 break;
             }
 
         }
         if(m_MyLerp.targetReached)
         {
+            CreateRDP(m_RDPTile);
             m_MyLerp.enabled = false;
-            CreateRDP();
         }
 
         if(Input.GetKeyDown(KeyCode.F))
@@ -111,47 +109,13 @@ public class AgentBuilder : MonoBehaviour {
         }
     }
 
-
     void OnPathComplete(Path p)
     {
         Debug.Log("Error?: " + p.error);
         if(!p.error)
         {
             m_Path = p;
-            m_CurrentWaypoint = 0;
         }
-    }
-
-
-    Vector3 FindNearest()
-    {
-        m_Radius += 1 * Time.deltaTime;
-
-        Vector3 _obj = Vector3.zero;
-
-        for (int i = 0; i < m_Mat.transform.childCount; i++)
-        {
-            if (m_Mat.transform.GetChild(i) != null)
-            {
-                m_Mat.transform.GetChild(i).gameObject.SetActive(true);
-            }
-        }
-
-        Collider[] objInRange = Physics.OverlapSphere(gameObject.transform.position, m_Radius, 1 << 10);
-        foreach(Collider col in objInRange)
-        {
-            if (col != null)
-            {
-                for (int i = 0; i < m_Mat.transform.childCount; i++)
-                {
-                    if (m_Mat.transform.GetChild(i) != null)
-                        m_Mat.transform.GetChild(i).gameObject.SetActive(false);
-                }
-                m_Radius = 0;
-                return col.transform.position;
-            }
-        }
-        return _obj;
     }
 
     void ReturnToRDP()
@@ -159,11 +123,11 @@ public class AgentBuilder : MonoBehaviour {
         m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
     }
 
-    void CreateRDP()
+    void CreateRDP(Transform _goal)
     {
         if (!m_RDPPlaced)
         {
-            Instantiate(m_RDPObj, new Vector3(transform.position.x, transform.position.y + 0.25f, transform.position.z), transform.rotation);
+            Instantiate(m_RDPObj, new Vector3(_goal.position.x, _goal.position.y + 0.75f, _goal.position.z), transform.rotation);
             m_RDPPlaced = true;
         }
     }

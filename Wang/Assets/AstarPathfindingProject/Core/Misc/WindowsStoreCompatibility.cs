@@ -1,7 +1,7 @@
 using System;
 #if NETFX_CORE
 using System.Threading;
-using System.Threading.Tasks;
+
 using System.Reflection;
 using TP = System.Reflection.TypeInfo;
 #else
