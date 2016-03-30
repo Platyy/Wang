@@ -152,6 +152,7 @@
     <Compile Include="Assets\KDTree\PriorityQueue.cs" />
     <Compile Include="Assets\KDTree\Properties\AssemblyInfo.cs" />
     <Compile Include="Assets\Scripts\AgentBuilder.cs" />
+    <Compile Include="Assets\Scripts\AgentLumberJack.cs" />
     <Compile Include="Assets\Scripts\FlyCam.cs" />
     <Compile Include="Assets\Scripts\Move.cs" />
     <Compile Include="Assets\Scripts\Wang.cs" />

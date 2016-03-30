@@ -16,11 +16,19 @@ public class Wang : MonoBehaviour
 
     private Color m_PrevColor;
 
+    public uint m_BuilderAmount = 4;
+    public GameObject m_Builder;
+    [SerializeField]
+    private uint m_LumberjackAmount = 10;
+    [SerializeField]
+    private uint m_MinerAmount = 10;
+
     private bool m_FoundFirst = false;
     private int m_FoundCount = 0;
     private int m_LineCount = 0;
 
     KdTree.KdTree<float, GameObject>[] m_KDTree = new KdTree<float, GameObject>[16];
+    KdTree.KdTree<float, GameObject>[] m_RDPTree;
 
     #region ColorDirections
     private int[] BlueWest   = { 1,  3,  5,  7,  9, 11, 13, 15 };
@@ -41,7 +49,11 @@ public class Wang : MonoBehaviour
 
     private Color[] m_CachedNorthTile;
 
+    public GameObject m_RDPObj;
+
     public int m_Length = 16;
+
+    #region GetDirections
 
     Color GetNorth(GameObject prefab)
     {
@@ -71,7 +83,7 @@ public class Wang : MonoBehaviour
         return SouthColor;
     }
 
-
+    #endregion
 
     void Awake()
     {
@@ -79,6 +91,12 @@ public class Wang : MonoBehaviour
         for (int i = 0; i < 16; i++)
         {
             m_KDTree[i] = new KdTree<float, GameObject>(3, floatMath);
+        }
+
+        m_RDPTree = new KdTree<float, GameObject>[m_BuilderAmount];
+        for(int i = 0; i < m_BuilderAmount; i++)
+        {
+            m_RDPTree[i] = new KdTree<float, GameObject>(3, floatMath);
         }
 
         /*
@@ -107,6 +125,7 @@ public class Wang : MonoBehaviour
 
         m_CachedNorthTile = new Color[m_Length];
         GenerateLine();
+        CreateAgents();
     }
 
     void GenerateLine()
@@ -260,6 +279,25 @@ public class Wang : MonoBehaviour
         m_KDTree[_position].Add(new float[] { _pos.x, _pos.y, _pos.z }, go);
     }
 
+    public void CreateRDP(Transform _goal)
+    {
+        GameObject go = (GameObject)Instantiate(m_RDPObj, new Vector3(_goal.position.x, _goal.position.y + 0.75f, _goal.position.z), transform.rotation);
+    }
+
+    void CreateAgents()
+    {
+        /*
+        Bounds:
+        z = 0 -> -49
+        x = 1 -> 50
+        */
+
+        for (int i = 0; i < m_BuilderAmount; i++)
+        {
+            Instantiate(m_Builder, new Vector3(Random.Range(1, 51), m_Builder.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
+        }
+    }
+
     public GameObject FindNearest(Vector3 _pos, int[] _materialPos)
     {
         GameObject closest = null;
@@ -328,7 +366,7 @@ public class Wang : MonoBehaviour
             Cube1: 60% Pine, 60% Iron, 140% NWood, 140% Stone
             Cube2 & Cube5: 60% Iron, 200% Stone, 110% NWood, 30% Pine
             Cube3 & Cube9: 60% Pine, 200% NWood, 110% Stone, 30% Iron
-            Cube4,7,10,13: 170% Stone, 170% NWood 30% Pine, 30% Iron
+            Cube4,7,10,13: 170% Stone, 170% NWood 30% Pine, 30% Iron  ###BUILDING TILES###
             Cube8 & Cube14: 140% NWood, 230% Stone, 30% Iron
             Cube11: 60% Pine, 260% NWood, 80% Stone
             Cube16: 200% NWood, 200% Stone

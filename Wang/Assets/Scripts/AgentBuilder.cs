@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Pathfinding;
 using Pathfinding.Util;
+using KdTree;
 public class AgentBuilder : MonoBehaviour {
 
 
@@ -44,27 +45,18 @@ public class AgentBuilder : MonoBehaviour {
         13. Repeat 11-12 until building is finished.
         14. Return to RDP and repeat 5-10
     */
-
-    /*
-        Bounds:
-        z = 0 -> -49
-        x = 1 -> 50
-
-    */
-
-    public GameObject m_RDPObj;
+    
     Seeker m_Seeker;
 
     Path m_Path;
 
     CharacterController m_Controller;
-
-    [SerializeField]
+    
     Wang m_WangObject;
 
     AILerp m_MyLerp;
 
-    public float m_Speed = 100f;
+    public float m_Speed = 1f;
 
     Transform m_RDPTile;
 
@@ -75,9 +67,11 @@ public class AgentBuilder : MonoBehaviour {
 
     void Start()
     {
-        m_Seeker = GetComponent<Seeker>();
+        var _Wang = GameObject.FindGameObjectWithTag("WangObject");
+        m_WangObject = _Wang.GetComponent<Wang>();
+        m_Seeker     = GetComponent<Seeker>();
         m_Controller = GetComponent<CharacterController>();
-        m_MyLerp = GetComponent<AILerp>();
+        m_MyLerp     = GetComponent<AILerp>();
     }
 
     void Update()
@@ -98,7 +92,11 @@ public class AgentBuilder : MonoBehaviour {
         }
         if(m_MyLerp.targetReached)
         {
-            CreateRDP(m_RDPTile);
+            if(!m_RDPPlaced)
+            {
+                m_WangObject.CreateRDP(m_RDPTile);
+                m_RDPPlaced = true;
+            }
             m_MyLerp.enabled = false;
         }
 
@@ -121,14 +119,5 @@ public class AgentBuilder : MonoBehaviour {
     void ReturnToRDP()
     {
         m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
-    }
-
-    void CreateRDP(Transform _goal)
-    {
-        if (!m_RDPPlaced)
-        {
-            Instantiate(m_RDPObj, new Vector3(_goal.position.x, _goal.position.y + 0.75f, _goal.position.z), transform.rotation);
-            m_RDPPlaced = true;
-        }
     }
 }
