@@ -28,7 +28,7 @@ public class Wang : MonoBehaviour
     private int m_LineCount = 0;
 
     KdTree.KdTree<float, GameObject>[] m_KDTree = new KdTree<float, GameObject>[16];
-    KdTree.KdTree<float, GameObject>[] m_RDPTree;
+    KdTree.KdTree<float, GameObject>[] m_RDPTree; // TODO: Add rdp object positions
 
     #region ColorDirections
     private int[] BlueWest   = { 1,  3,  5,  7,  9, 11, 13, 15 };
@@ -282,6 +282,8 @@ public class Wang : MonoBehaviour
     public void CreateRDP(Transform _goal)
     {
         GameObject go = (GameObject)Instantiate(m_RDPObj, new Vector3(_goal.position.x, _goal.position.y + 0.75f, _goal.position.z), transform.rotation);
+        Vector3 _pos = go.transform.position;
+        m_RDPTree[0].Add(new float[] { _pos.x, _pos.y, _pos.z }, go);
     }
 
     void CreateAgents()
@@ -296,6 +298,33 @@ public class Wang : MonoBehaviour
         {
             Instantiate(m_Builder, new Vector3(Random.Range(1, 51), m_Builder.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
         }
+    }
+
+    public GameObject FindRDP(Vector3 _pos)
+    {
+        GameObject closest = null;
+
+        float closestSqrMag = int.MaxValue;
+        if (m_RDPTree.Length > 0)
+        {
+            for (int i = 0; i < m_RDPTree.Length; i++)
+            {
+                var _foundResults = m_RDPTree[0].GetNearestNeighbours(new float[] { _pos.x, _pos.y, _pos.z }, 1);
+                if (_foundResults.Length > 0)
+                {
+                    float dist = Vector3.SqrMagnitude(_foundResults[0].Value.transform.position - _pos);
+                    if (closestSqrMag > dist)
+                    {
+                        closestSqrMag = dist;
+                        closest = _foundResults[0].Value;
+                    }
+
+                }
+            }
+        }
+        else return null;
+
+        return closest;
     }
 
     public GameObject FindNearest(Vector3 _pos, int[] _materialPos)
@@ -317,6 +346,33 @@ public class Wang : MonoBehaviour
             }
         }
         return closest;
+    }
+
+    public GameObject[] FindCollection(Vector3 _pos, int[] _materialPos, int _amount)
+    {
+        GameObject[] _found = new GameObject[_amount];
+        float closestSqrMag = int.MaxValue;
+
+        for (int i = 0; i < _materialPos.Length; i++)
+        {
+            var _foundResults = m_KDTree[_materialPos[i] - 1].GetNearestNeighbours(new float[] { _pos.x, _pos.y, _pos.z }, _amount);
+            if (_foundResults.Length > 0)
+            {
+                for(int j = 0; j < _amount; j++)
+                {
+                    float dist = Vector3.SqrMagnitude(_foundResults[j].Value.transform.position - _pos);
+
+                    if (closestSqrMag > dist)
+                    {
+
+                        closestSqrMag = dist;
+                        _found[j] = _foundResults[j].Value;
+                    }
+                }
+            }
+        }
+        
+        return _found;
     }
 
     void Combine()
@@ -360,16 +416,4 @@ public class Wang : MonoBehaviour
         AstarPath.active.Scan();
     }
 
-    void PopulateTile()
-    {
-        /*
-            Cube1: 60% Pine, 60% Iron, 140% NWood, 140% Stone
-            Cube2 & Cube5: 60% Iron, 200% Stone, 110% NWood, 30% Pine
-            Cube3 & Cube9: 60% Pine, 200% NWood, 110% Stone, 30% Iron
-            Cube4,7,10,13: 170% Stone, 170% NWood 30% Pine, 30% Iron  ###BUILDING TILES###
-            Cube8 & Cube14: 140% NWood, 230% Stone, 30% Iron
-            Cube11: 60% Pine, 260% NWood, 80% Stone
-            Cube16: 200% NWood, 200% Stone
-        */
-    }
 }
