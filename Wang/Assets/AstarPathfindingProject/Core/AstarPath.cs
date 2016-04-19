@@ -674,7 +674,7 @@ public class AstarPath : MonoBehaviour {
 		if (nextFreePathID == 0) {
 			nextFreePathID++;
 
-			Debug.Log("65K cleanup (this message is harmless, it just means you have searched a lot of paths)");
+			////Debug.Log("65K cleanup (this message is harmless, it just means you have searched a lot of paths)");
 
 			if (On65KOverflow != null) {
 				System.Action tmp = On65KOverflow;
@@ -809,24 +809,24 @@ public class AstarPath : MonoBehaviour {
 	/** Logs a string while taking into account #logPathResults */
 	private static void AstarLog (string s) {
 		if (System.Object.ReferenceEquals(active, null)) {
-			Debug.Log("No AstarPath object was found : "+s);
+			////Debug.Log("No AstarPath object was found : "+s);
 			return;
 		}
 
 		if (active.logPathResults != PathLog.None && active.logPathResults != PathLog.OnlyErrors) {
-			Debug.Log(s);
+			////Debug.Log(s);
 		}
 	}
 
 	/** Logs an error string while taking into account #logPathResults */
 	private static void AstarLogError (string s) {
 		if (active == null) {
-			Debug.Log("No AstarPath object was found : "+s);
+			////Debug.Log("No AstarPath object was found : "+s);
 			return;
 		}
 
 		if (active.logPathResults != PathLog.None) {
-			Debug.LogError(s);
+			//Debug.LogError(s);
 		}
 	}
 #line default
@@ -846,7 +846,7 @@ public class AstarPath : MonoBehaviour {
 		if (logPathResults == PathLog.InGame) {
 			inGameDebugPath = debug;
 		} else {
-			Debug.Log(debug);
+			////Debug.Log(debug);
 		}
 	}
 
@@ -900,8 +900,8 @@ public class AstarPath : MonoBehaviour {
 
 				// Queue termination exceptions should be ignored, they are supposed to kill the thread
 				if (!(e is ThreadControlQueue.QueueTerminationException)) {
-					Debug.LogException(e);
-					Debug.LogError("Unhandled exception during pathfinding. Terminating.");
+					//Debug.LogException(e);
+					//Debug.LogError("Unhandled exception during pathfinding. Terminating.");
 					pathQueue.TerminateReceivers();
 
 					//This will throw an exception supposed to kill the thread
@@ -1034,7 +1034,7 @@ public class AstarPath : MonoBehaviour {
 
 				if (!status) {
 					if (force) {
-						Debug.LogError("Misbehaving WorkItem. 'force'=true but the work item did not complete.\nIf force=true is passed to a WorkItem it should always return true.");
+						//Debug.LogError("Misbehaving WorkItem. 'force'=true but the work item did not complete.\nIf force=true is passed to a WorkItem it should always return true.");
 					}
 					// Still work items to process
 					processingWorkItems = false;
@@ -1302,13 +1302,13 @@ public class AstarPath : MonoBehaviour {
 					try {
 						s.graph.UpdateAreaInit(s.obj);
 					} catch (System.Exception e) {
-						Debug.LogError("Error while initializing GraphUpdates\n" + e);
+						//Debug.LogError("Error while initializing GraphUpdates\n" + e);
 					}
 				}
 				try {
 					s.graph.UpdateArea(s.obj);
 				} catch (System.Exception e) {
-					Debug.LogError("Error while updating graphs\n"+e);
+					//Debug.LogError("Error while updating graphs\n"+e);
 				}
 			}
 #if !UNITY_WEBGL
@@ -1340,7 +1340,7 @@ public class AstarPath : MonoBehaviour {
 		AstarPath astar = _astar as AstarPath;
 
 		if (System.Object.ReferenceEquals(astar, null)) {
-			Debug.LogError("ProcessGraphUpdatesAsync started with invalid parameter _astar (was no AstarPath object)");
+			//Debug.LogError("ProcessGraphUpdatesAsync started with invalid parameter _astar (was no AstarPath object)");
 			return;
 		}
 
@@ -1500,7 +1500,7 @@ public class AstarPath : MonoBehaviour {
 		//Start pathfinding threads
 		for (int i = 0; i < threads.Length; i++) {
 			if (logPathResults == PathLog.Heavy)
-				Debug.Log("Starting pathfinding thread "+i);
+				//Debug.Log("Starting pathfinding thread "+i);
 			threads[i].Start(threadInfos[i]);
 		}
 
@@ -1642,7 +1642,7 @@ public class AstarPath : MonoBehaviour {
 		if (!Application.isPlaying) return;
 
 		if (logPathResults == PathLog.Heavy)
-			Debug.Log("+++ AstarPath Component Destroyed - Cleaning Up Pathfinding Data +++");
+			//Debug.Log("+++ AstarPath Component Destroyed - Cleaning Up Pathfinding Data +++");
 
 		if (active != this) return;
 
@@ -1657,7 +1657,7 @@ public class AstarPath : MonoBehaviour {
 		pathQueue.TerminateReceivers();
 
 		if (logPathResults == PathLog.Heavy)
-			Debug.Log("Processing Eventual Work Items");
+			//Debug.Log("Processing Eventual Work Items");
 
 		//Resume graph update thread, will cause it to terminate
 		graphUpdateAsyncEvent.Set();
@@ -1680,7 +1680,7 @@ public class AstarPath : MonoBehaviour {
 		}
 
 		if (logPathResults == PathLog.Heavy)
-			Debug.Log("Returning Paths");
+			//Debug.Log("Returning Paths");
 
 
 		//Return all paths
@@ -1689,14 +1689,14 @@ public class AstarPath : MonoBehaviour {
 		pathReturnStack.PopAll();
 
 		if (logPathResults == PathLog.Heavy)
-			Debug.Log("Destroying Graphs");
+			//Debug.Log("Destroying Graphs");
 
 
 		//Clean graphs up
 		astarData.OnDestroy();
 
 		if (logPathResults == PathLog.Heavy)
-			Debug.Log("Cleaning up variables");
+			//Debug.Log("Cleaning up variables");
 
 		//Clear variables up, static variables are good to clean up, otherwise the next scene might get weird data
 		floodStack = null;
@@ -1956,7 +1956,7 @@ public class AstarPath : MonoBehaviour {
 
 	/** Scans all graphs. This is a IEnumerable, you can loop through it to get the progress
 	 * \code foreach (Progress progress in AstarPath.active.ScanLoop ()) {
-	 * Debug.Log ("Scanning... " + progress.description + " - " + (progress.progress*100).ToString ("0") + "%");
+	 * //Debug.Log ("Scanning... " + progress.description + " - " + (progress.progress*100).ToString ("0") + "%");
 	 * } \endcode
 	 * \see Scan
 	 */
@@ -2303,7 +2303,7 @@ public class AstarPath : MonoBehaviour {
 	 */
 	public void OnApplicationQuit () {
 		if (logPathResults == PathLog.Heavy) {
-			Debug.Log("+++ Application Quitting - Cleaning Up +++");
+			//Debug.Log("+++ Application Quitting - Cleaning Up +++");
 		}
 
 		OnDestroy();

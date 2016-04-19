@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using KdTree;
 
 [RequireComponent(typeof(MeshFilter))]
@@ -48,6 +49,8 @@ public class Wang : MonoBehaviour
     #endregion
 
     private Color[] m_CachedNorthTile;
+
+    public List<GameObject> m_NWoodEmpty;
 
     public GameObject m_RDPObj;
 
@@ -348,31 +351,22 @@ public class Wang : MonoBehaviour
         return closest;
     }
 
-    public GameObject[] FindCollection(Vector3 _pos, int[] _materialPos, int _amount)
+    public GameObject[] FindCollection(Vector3 _pos, int[] _tilesToFind, int _amount)
     {
-        GameObject[] _found = new GameObject[_amount];
-        float closestSqrMag = int.MaxValue;
-
-        for (int i = 0; i < _materialPos.Length; i++)
+        List<GameObject> results = new List<GameObject>();
+        for (int i = 0; i < _tilesToFind.Length; i++)
         {
-            var _foundResults = m_KDTree[_materialPos[i] - 1].GetNearestNeighbours(new float[] { _pos.x, _pos.y, _pos.z }, _amount);
-            if (_foundResults.Length > 0)
-            {
-                for(int j = 0; j < _amount; j++)
-                {
-                    float dist = Vector3.SqrMagnitude(_foundResults[j].Value.transform.position - _pos);
-
-                    if (closestSqrMag > dist)
-                    {
-
-                        closestSqrMag = dist;
-                        _found[j] = _foundResults[j].Value;
-                    }
-                }
-            }
+            var _foundResults = m_KDTree[_tilesToFind[i] - 1].GetNearestNeighbours(new float[] { _pos.x, _pos.y, _pos.z }, _amount);
+            results.AddRange( System.Array.ConvertAll( _foundResults, fr=>fr.Value ) );
+            
         }
-        
-        return _found;
+
+        results.Sort((g1, g2) => { return (int)(Vector3.SqrMagnitude(g1.transform.position - _pos) - Vector3.SqrMagnitude(g2.transform.position - _pos)); });
+        //foreach(var r in results)
+        //{
+        //    Debug.LogFormat("{0}, {1}", r.name, Vector3.SqrMagnitude(r.transform.position - _pos));
+        //}
+        return results.GetRange(0, _amount).ToArray();
     }
 
     void Combine()

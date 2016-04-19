@@ -20,12 +20,53 @@ public class TileResources : MonoBehaviour {
 
     public int m_Pine = 0, m_NWood = 0, m_Iron = 0, m_Stone = 0;
 
-    public bool m_Depleted = false;
+    public bool m_PineDepleted = false, m_NWoodDepleted = false, m_IronDepleted = false, m_StoneDepleted = false;
 
-    void Start()
+
+    void Awake()
     {
-
 
     }
 
+    void Update()
+    {
+        
+        switch(tag)
+        {
+            case "Mat1":
+
+                break;
+            case "Mat2": case "Mat5":
+
+                break;
+            case "Mat3": case "Mat9":
+
+                break;
+            case "Mat6":
+
+                break;
+            case "Mat8": case "Mat14":
+
+                break;
+            case "Mat11":
+                if(m_NWood <= 0 && !m_NWoodDepleted)
+                {
+                    m_NWoodDepleted = true;
+                    gameObject.SetActive(false);
+                }
+                break;
+            case "Mat12": case "Mat15":
+                if (m_NWood <= 0 && !m_NWoodDepleted)
+                {
+                    m_NWoodDepleted = true;
+                    gameObject.SetActive(false);
+                }
+                break;
+            case "Mat16":
+
+                break;
+            default:
+                break;
+        }
+    }
 }
