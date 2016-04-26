@@ -61,22 +61,65 @@ public class AgentBuilder : MonoBehaviour {
     Transform m_RDPTile;
 
     Vector3 m_RDP;
-    
+
+    GameObject m_MyRDP;
+
     bool m_Found = false;
     bool m_RDPPlaced = false;
 
+    enum CurrentState
+    {
+        MOVINGTORDP,
+        MOVINGTOTILE,
+        SEARCHINGFORTILE,
+        CONSTRUCTINGBUILDING,
+        WAITINGFORRESOURCES
+    }
+
+    CurrentState m_MyState;
+
     void Start()
     {
-        var _Wang = GameObject.FindGameObjectWithTag("WangObject");
+        var _Wang    = GameObject.FindGameObjectWithTag("WangObject");
         m_WangObject = _Wang.GetComponent<Wang>();
         m_Seeker     = GetComponent<Seeker>();
         m_Controller = GetComponent<CharacterController>();
         m_MyLerp     = GetComponent<AILerp>();
+        m_MyState    = CurrentState.SEARCHINGFORTILE;
     }
 
     void Update()
     {
-        while(!m_Found)
+        if (m_MyState == CurrentState.SEARCHINGFORTILE)
+            FindRDPTile();
+        if (m_Seeker.IsDone() && m_MyState == CurrentState.MOVINGTORDP)
+            PlaceRDP();
+
+        if(m_MyState == CurrentState.WAITINGFORRESOURCES)
+        {
+            // Choose a building
+            // Wait for resources
+        }
+    }
+
+    void PlaceRDP()
+    {
+        if (m_MyLerp.targetReached)
+        {
+            if (!m_RDPPlaced && m_MyRDP == null)
+            {
+                m_WangObject.CreateRDP(m_RDPTile);
+                m_MyRDP = m_WangObject.FindRDP(m_RDPTile.position);
+                m_RDPPlaced = true;
+                m_MyState = CurrentState.WAITINGFORRESOURCES;
+            }
+            m_MyLerp.enabled = false;
+        }
+    }
+
+    void FindRDPTile()
+    {
+        while (!m_Found)
         {
             int[] _matsToFind = new int[] { 4, 7, 10, 13 };
             GameObject _found = m_WangObject.FindNearest(transform.position, _matsToFind);
@@ -84,26 +127,11 @@ public class AgentBuilder : MonoBehaviour {
             {
                 m_RDP = _found.transform.position;
                 m_Seeker.StartPath(transform.position, _found.transform.position, OnPathComplete);
+                m_MyState = CurrentState.MOVINGTORDP;
                 m_Found = true;
                 m_RDPTile = _found.transform;
                 break;
             }
-
-        }
-        if(m_MyLerp.targetReached)
-        {
-            if(!m_RDPPlaced)
-            {
-                m_WangObject.CreateRDP(m_RDPTile);
-                m_RDPPlaced = true;
-            }
-            m_MyLerp.enabled = false;
-        }
-
-        if(Input.GetKeyDown(KeyCode.F))
-        {
-            m_MyLerp.enabled = true;
-            ReturnToRDP();
         }
     }
 
@@ -119,5 +147,10 @@ public class AgentBuilder : MonoBehaviour {
     void ReturnToRDP()
     {
         m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
+    }
+
+    void ChooseBuilding()
+    {
+        // Find amount of miners & lumberjacks on my rdp
     }
 }

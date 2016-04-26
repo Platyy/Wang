@@ -14,7 +14,8 @@ public class AgentLumberJack : MonoBehaviour {
     
     Path m_Path;
 
-    public float m_Speed = 1f;
+    public float m_MovSpeed = 2f;
+    public float m_ChopSpeed = 0.25f;
 
     private uint m_InventorySize = 10;
     private uint m_CurrentNWood = 0;
@@ -45,16 +46,19 @@ public class AgentLumberJack : MonoBehaviour {
 
     void Start()
     {
-        m_Wang       = GameObject.FindGameObjectWithTag("WangObject");
-        m_WangObject = m_Wang.GetComponent<Wang>();
-        m_Seeker     = GetComponent<Seeker>();
-        m_Controller = GetComponent<CharacterController>();
-        m_MyLerp     = GetComponent<AILerp>();
-        m_MyState    = CurrentState.SEARCHINGFORTILE;
+        m_Wang         = GameObject.FindGameObjectWithTag("WangObject");
+        m_WangObject   = m_Wang.GetComponent<Wang>();
+        m_Seeker       = GetComponent<Seeker>();
+        m_Controller   = GetComponent<CharacterController>();
+        m_MyLerp       = GetComponent<AILerp>();
+        m_MyState      = CurrentState.SEARCHINGFORTILE;
+        m_MovSpeed     = Random.Range(0.5f, 2.5f);
+        m_ChopSpeed    = Random.Range(0.1f, 0.5f);
     }
 
     void Update()
     {
+        m_MyLerp.speed = m_MovSpeed;
         if(m_ShouldSearch && m_MyState == CurrentState.SEARCHINGFORTILE)
             SearchForTrees();
         
@@ -138,7 +142,7 @@ public class AgentLumberJack : MonoBehaviour {
 
                 m_CurrentNWood++;
                 _currentTile.GetComponent<TileResources>().m_NWood--;
-                yield return new WaitForSeconds(0.25f);
+                yield return new WaitForSeconds(m_ChopSpeed);
                 if (m_CurrentNWood == m_InventorySize)
                     break;
             }
@@ -150,7 +154,7 @@ public class AgentLumberJack : MonoBehaviour {
             {
                 m_CurrentPine++;
                 _currentTile.GetComponent<TileResources>().m_Pine--;
-                yield return new WaitForSeconds(2);
+                yield return new WaitForSeconds(m_ChopSpeed * 3f);
             }
         }
         else yield break;
@@ -170,6 +174,7 @@ public class AgentLumberJack : MonoBehaviour {
         if(m_MyRDP == null)
         {
             m_MyRDP = m_WangObject.FindRDP(transform.position);
+            m_MyRDP.GetComponent<RDPManager>().m_LumberjackAmount++;
         }
     }
 
