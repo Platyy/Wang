@@ -153,4 +153,46 @@ public class AgentBuilder : MonoBehaviour {
     {
         // Find amount of miners & lumberjacks on my rdp
     }
+
+    //void AFG(float _optimal, float _okay, float _below, float _min, float _max, float _value)
+    //{
+    //    if (_value > _max)
+    //    {
+            
+    //    }
+    //    else if (_value < _min)
+    //    {
+    //        //Below
+    //    }
+    //    else
+    //    {
+    //        //Between
+    //    }
+    //}
+
+    //void MakeDecision()
+    //{
+    //    //m_MovSpeed  = Random.Range(0.5f, 2.5f); // Optimal Range is > 2.0, Low range is < 0.75
+    //    //m_ChopSpeed = Random.Range(0.1f, 0.5f); // Optimal Range is > 0.35, Low range is < 0.2
+
+    //    uint _optimalMov = 0, _optimalChop = 0, _okayMov = 0, _okayChop = 0, _subMov = 0, _subChop = 0;
+
+    //    float y = 1.0f;
+
+    //    for (int i = 0; i < m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks.Count; i++)
+    //    {
+    //        //switch (y.ToString())
+    //        //{
+    //        //    case > "0.5":
+    //        //        break;
+    //        //}
+
+    //        float _MOVESPEED = 
+    //            m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks[i].GetComponent<AgentLumberJack>().m_MovSpeed;
+
+
+            
+    //    }
+    //}
+
 }
