@@ -3,46 +3,46 @@ using System.Collections;
 using System.Collections.Generic;
 using Pathfinding;
 using Pathfinding.Util;
-public class AgentLumberJack : MonoBehaviour {
+public class AgentMiner : MonoBehaviour {
 
     Seeker m_Seeker;
     CharacterController m_Controller;
-    
+
     Wang m_WangObject;
     GameObject m_Wang;
     AILerp m_MyLerp;
-    
+
     Path m_Path;
 
     public float m_MovSpeed = 2f;
-    public float m_ChopSpeed = 0.25f;
+    public float m_MineSpeed = 0.25f;
     public float m_ChanceForRare = 0.25f;
 
     private uint m_InventorySize = 10;
-    private uint m_CurrentNWood = 0;
-    private uint m_CurrentPine = 0;
+    private uint m_CurrentStone = 0;
+    private uint m_CurrentIron = 0;
 
     GameObject m_MyRDP;
 
     GameObject m_CurrentTile;
 
     bool m_ShouldSearch = true;
-    bool m_IsChopping = false;
+    bool m_IsMining = false;
 
     enum CurrentState
     {
         MOVINGTORDP,
         MOVINGTOTILE,
         SEARCHINGFORTILE,
-        CHOPPINGWOOD
+        MININGRESOURCES
     }
 
     CurrentState m_MyState;
 
     public enum Choice
     {
-        NWOOD,
-        PINE
+        STONE,
+        IRON
     }
 
     public Choice m_MyChoice;
@@ -56,32 +56,30 @@ public class AgentLumberJack : MonoBehaviour {
         m_MyLerp        = GetComponent<AILerp>();
         m_MyState       = CurrentState.SEARCHINGFORTILE;
         m_MovSpeed      = Random.Range(0.5f, 2.5f);
-        m_ChopSpeed     = Random.Range(0.1f, 0.5f);
+        m_MineSpeed     = Random.Range(0.1f, 0.5f);
         m_ChanceForRare = Random.Range(0.01f, 0.99f);
 
         if (m_ChanceForRare > 0.25f)
-            m_MyChoice = Choice.NWOOD;
+            m_MyChoice = Choice.STONE;
         else
-            m_MyChoice = Choice.PINE;
+            m_MyChoice = Choice.IRON;
     }
 
     void Update()
     {
         m_MyLerp.speed = m_MovSpeed;
-        if(m_ShouldSearch && m_MyState == CurrentState.SEARCHINGFORTILE)
-            SearchForTrees();
-        
-        if(m_Seeker.IsDone() && m_MyState == CurrentState.MOVINGTOTILE)
+        if (m_ShouldSearch && m_MyState == CurrentState.SEARCHINGFORTILE)
+            SearchForRes();
+
+        if (m_Seeker.IsDone() && m_MyState == CurrentState.MOVINGTOTILE)
         {
-            if (m_MyLerp.targetReached && !m_IsChopping)
+            if (m_MyLerp.targetReached && !m_IsMining)
             {
-                // Begin chopping wood?
-                
-                StartCoroutine(IChop(m_CurrentTile, m_MyChoice));
-                m_IsChopping = true;
+                StartCoroutine(IMine(m_CurrentTile, m_MyChoice));
+                m_IsMining = true;
             }
         }
-        else if(m_Seeker.IsDone() && m_MyLerp.targetReached && m_MyState == CurrentState.MOVINGTORDP)
+        else if (m_Seeker.IsDone() && m_MyLerp.targetReached && m_MyState == CurrentState.MOVINGTORDP)
         {
             DepositResources();
             m_ShouldSearch = true;
@@ -89,25 +87,25 @@ public class AgentLumberJack : MonoBehaviour {
         }
     }
 
-    // NWood Priorities: Cube11 -> Cube12&15 -> Cube3&9 -> Cube16 -> Cube1 -> Cube8&14 -> Cube2&5 -> Cube6
-    // Pine  Priorities: Cube1 -> Cube3&9 -> Cube11 ->Cube2&5 -> Cube12&15
+    // Stone Priorities: Cube6 -> Cube8&14 -> Cube2&5, -> Cube16
+    // Iron  Priorities: Cube6 -> Cube2&5 -> Cube1
 
-    void SearchForTrees()
+    void SearchForRes()
     {
         bool _foundTile = false;
-        while(!_foundTile)
+        while (!_foundTile)
         {
             int[] _matsToFind = new int[] { };
-            if (m_MyChoice == Choice.NWOOD)
-                _matsToFind = new int[] { 11, 12, 15 };
-            else if (m_MyChoice == Choice.PINE)
-                _matsToFind = new int[] { 1, 3, 9 };
+            if (m_MyChoice == Choice.STONE)
+                _matsToFind = new int[] { 6, 8, 14 };
+            else if (m_MyChoice == Choice.IRON)
+                _matsToFind = new int[] { 6, 2, 5 };
 
             GameObject[] _found = m_WangObject.FindCollection(transform.position, _matsToFind, 15);
 
-            if(_found != null)
+            if (_found != null)
             {
-                for(int i = 0; i < _found.Length; i++)
+                for (int i = 0; i < _found.Length; i++)
                 {
                     _found[i].SetActive(true);
                     if (!_found[i].GetComponent<TileResources>().m_NWoodDepleted)
@@ -130,85 +128,83 @@ public class AgentLumberJack : MonoBehaviour {
                 break;
             }
         }
-
     }
 
     void DepositResources()
     {
-        if(m_CurrentNWood > 0)
+        if (m_CurrentStone > 0)
         {
-            m_MyRDP.GetComponent<RDPManager>().m_WoodAmount += m_CurrentNWood;
-            m_CurrentNWood = 0;
+            m_MyRDP.GetComponent<RDPManager>().m_StoneAmount += m_CurrentStone;
+            m_CurrentStone = 0;
         }
-        else if(m_CurrentPine > 0)
+        else if (m_CurrentIron > 0)
         {
-            m_MyRDP.GetComponent<RDPManager>().m_PineAmount += m_CurrentPine;
-            m_CurrentPine = 0;
+            m_MyRDP.GetComponent<RDPManager>().m_IronAmount += m_CurrentIron;
+            m_CurrentIron = 0;
         }
     }
 
-    IEnumerator IChop(GameObject _currentTile, Choice _type)
+    IEnumerator IMine(GameObject _currentTile, Choice _type)
     {
         var _tileRes = _currentTile.GetComponent<TileResources>();
-        if (_type == Choice.NWOOD)
+        if (_type == Choice.STONE)
         {
-            m_MyState = CurrentState.CHOPPINGWOOD;
-            while (m_CurrentNWood < m_InventorySize || !_tileRes.m_NWoodDepleted)
+            m_MyState = CurrentState.MININGRESOURCES;
+            while (m_CurrentStone < m_InventorySize || !_tileRes.m_StoneDepleted)
             {
 
-                m_CurrentNWood++;
-                _tileRes.m_NWood--;
-                yield return new WaitForSeconds(m_ChopSpeed);
-                if (m_CurrentNWood == m_InventorySize)
+                m_CurrentStone++;
+                _currentTile.GetComponent<TileResources>().m_Stone--;
+                yield return new WaitForSeconds(m_MineSpeed);
+                if (m_CurrentStone == m_InventorySize)
                     break;
             }
         }
-        else if (_type == Choice.PINE)
+        else if (_type == Choice.IRON)
         {
-            m_MyState = CurrentState.CHOPPINGWOOD;
-            while (m_CurrentPine <= m_InventorySize || !_tileRes.m_PineDepleted)
+            m_MyState = CurrentState.MININGRESOURCES;
+            while (m_CurrentIron <= m_InventorySize || !_tileRes.m_IronDepleted)
             {
-                m_CurrentPine++;
-                _tileRes.m_Pine--;
-                yield return new WaitForSeconds(m_ChopSpeed * 3f);
-                if (m_CurrentPine == m_InventorySize)
+                m_CurrentIron++;
+                _tileRes.m_Iron--;
+                yield return new WaitForSeconds(m_MineSpeed * 3f);
+                if (m_CurrentIron == m_InventorySize)
                     break;
             }
         }
         else yield break;
-        
-        if(m_CurrentPine == m_InventorySize || m_CurrentNWood == m_InventorySize || _tileRes.m_NWoodDepleted || _tileRes.m_PineDepleted)
+
+        if (m_CurrentStone == m_InventorySize || m_CurrentIron == m_InventorySize || _tileRes.m_StoneDepleted || _tileRes.m_IronDepleted)
         {
             _currentTile.SetActive(false);
             SetRDP();
             ReturnToRDP();
-            m_IsChopping = false;
+            m_IsMining = false;
             yield return null;
         }
     }
 
     void SetRDP()
     {
-        if(m_MyRDP == null)
+        if (m_MyRDP == null)
         {
             m_MyRDP = m_WangObject.FindRDP(transform.position);
-            m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks.Add(gameObject);
+            m_MyRDP.GetComponent<RDPManager>().m_Miners.Add(gameObject);
         }
     }
 
     void ReturnToRDP()
     {
-        if(m_MyRDP != null)
+        if (m_MyRDP != null)
         {
             m_MyLerp.enabled = true;
             m_Seeker.StartPath(transform.position, m_MyRDP.transform.position, Deposit);
-
         }
     }
 
     void OnPathComplete(Path p)
     {
-        if(!p.error)
+        if (!p.error)
         {
             m_Path = p;
         }
@@ -216,7 +212,7 @@ public class AgentLumberJack : MonoBehaviour {
 
     void Deposit(Path p)
     {
-        if(!p.error)
+        if (!p.error)
         {
             m_Path = p;
             m_MyState = CurrentState.MOVINGTORDP;

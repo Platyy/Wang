@@ -17,8 +17,9 @@ public class Wang : MonoBehaviour
 
     private Color m_PrevColor;
 
+    public uint m_AgentAmount = 10;
     public uint m_BuilderAmount = 4;
-    public GameObject m_Builder;
+    public GameObject m_Builder, m_Lumberjack, m_Miner;
     [SerializeField]
     private uint m_LumberjackAmount = 10;
     [SerializeField]
@@ -300,6 +301,14 @@ public class Wang : MonoBehaviour
         for (int i = 0; i < m_BuilderAmount; i++)
         {
             Instantiate(m_Builder, new Vector3(Random.Range(1, 51), m_Builder.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
+        }
+        for (int i = 0; i < m_AgentAmount; i++)
+        {
+            Instantiate(m_Lumberjack, new Vector3(Random.Range(1, 51), m_Lumberjack.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
+        }
+        for (int i = 0; i < m_AgentAmount; i++)
+        {
+            Instantiate(m_Miner, new Vector3(Random.Range(1, 51), m_Miner.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
         }
     }
 

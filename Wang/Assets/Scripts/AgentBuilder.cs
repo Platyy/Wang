@@ -148,51 +148,69 @@ public class AgentBuilder : MonoBehaviour {
     {
         m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
     }
-
-    void ChooseBuilding()
+    
+    void Choose()
     {
-        // Find amount of miners & lumberjacks on my rdp
+        var _rdpMan = m_MyRDP.GetComponent<RDPManager>();
+        int _minerAmount = _rdpMan.m_Miners.Count;
+        int _lumberAmount = _rdpMan.m_Lumberjacks.Count;
+        if(_minerAmount > _lumberAmount)
+        { // More Miners
+            int _slowMovers = 0, _regMovers = 0, _fastMovers = 0, _slowMiners = 0, _regMiners = 0, _fastMiners = 0;
+            for(int i = 0; i < _rdpMan.m_Miners.Count; i++)
+            {
+                var _miner = _rdpMan.m_Miners[i].GetComponent<AgentMiner>();
+                if (_miner.m_MovSpeed > 2.0f)
+                    _fastMovers++;
+                else if (_miner.m_MovSpeed > 0.75f)
+                    _regMovers++;
+                else
+                    _slowMovers++;
+
+                if (_miner.m_MineSpeed > 0.4f)
+                    _fastMiners++;
+                else if (_miner.m_MineSpeed > 0.2f)
+                    _regMiners++;
+                else
+                    _slowMiners++;
+            }
+            if(_slowMovers > _slowMiners)
+            {
+                // Build Move Upgrade
+            }
+            else
+            {
+                // Build Mine Upgrade
+            }
+        }
+        else
+        {
+            int _slowMovers = 0, _regMovers = 0, _fastMovers = 0, _slowChoppers = 0, _regChoppers = 0, _fastChoppers = 0;
+            for (int i = 0; i < _rdpMan.m_Lumberjacks.Count; i++)
+            {
+                var _lumber = _rdpMan.m_Lumberjacks[i].GetComponent<AgentLumberJack>();
+                if (_lumber.m_MovSpeed > 2.0f)
+                    _fastMovers++;
+                else if (_lumber.m_MovSpeed > 0.75f)
+                    _regMovers++;
+                else
+                    _slowMovers++;
+
+                if (_lumber.m_ChopSpeed > 0.4f)
+                    _fastChoppers++;
+                else if (_lumber.m_ChopSpeed > 0.2f)
+                    _regChoppers++;
+                else
+                    _slowChoppers++;
+            }
+            if (_slowMovers > _slowChoppers)
+            {
+                // Build Move Upgrade
+            }
+            else
+            {
+                // Build Chop Upgrade
+            }
+        }
     }
-
-    //void AFG(float _optimal, float _okay, float _below, float _min, float _max, float _value)
-    //{
-    //    if (_value > _max)
-    //    {
-            
-    //    }
-    //    else if (_value < _min)
-    //    {
-    //        //Below
-    //    }
-    //    else
-    //    {
-    //        //Between
-    //    }
-    //}
-
-    //void MakeDecision()
-    //{
-    //    //m_MovSpeed  = Random.Range(0.5f, 2.5f); // Optimal Range is > 2.0, Low range is < 0.75
-    //    //m_ChopSpeed = Random.Range(0.1f, 0.5f); // Optimal Range is > 0.35, Low range is < 0.2
-
-    //    uint _optimalMov = 0, _optimalChop = 0, _okayMov = 0, _okayChop = 0, _subMov = 0, _subChop = 0;
-
-    //    float y = 1.0f;
-
-    //    for (int i = 0; i < m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks.Count; i++)
-    //    {
-    //        //switch (y.ToString())
-    //        //{
-    //        //    case > "0.5":
-    //        //        break;
-    //        //}
-
-    //        float _MOVESPEED = 
-    //            m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks[i].GetComponent<AgentLumberJack>().m_MovSpeed;
-
-
-            
-    //    }
-    //}
-
 }

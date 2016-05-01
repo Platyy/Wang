@@ -15,6 +15,9 @@ public class TileResources : MonoBehaviour {
     Cube16: 200% NWood, 200% Stone
     */
 
+
+    // Stone Priorities: Cube6 -> Cube8&14 -> Cube2&5, -> Cube16
+    // Iron  Priorities: Cube6 -> Cube2&5 -> Cube1
     // NWood Priorities: Cube11 -> Cube12&15 -> Cube3&9 -> Cube16 -> Cube1 -> Cube8&14 -> Cube2&5 -> Cube6
     // Pine  Priorities: Cube1 -> Cube3&9 -> Cube11 ->Cube2&5 -> Cube12&15
 
@@ -30,7 +33,6 @@ public class TileResources : MonoBehaviour {
 
     void Update()
     {
-        
         switch(tag)
         {
             case "Mat1":
