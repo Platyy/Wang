@@ -371,10 +371,6 @@ public class Wang : MonoBehaviour
         }
 
         results.Sort((g1, g2) => { return (int)(Vector3.SqrMagnitude(g1.transform.position - _pos) - Vector3.SqrMagnitude(g2.transform.position - _pos)); });
-        //foreach(var r in results)
-        //{
-        //    Debug.LogFormat("{0}, {1}", r.name, Vector3.SqrMagnitude(r.transform.position - _pos));
-        //}
         return results.GetRange(0, _amount).ToArray();
     }
 

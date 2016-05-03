@@ -25,6 +25,8 @@ public class TileResources : MonoBehaviour {
 
     public bool m_PineDepleted = false, m_NWoodDepleted = false, m_IronDepleted = false, m_StoneDepleted = false;
 
+    public bool m_HasBuilding = false;
+
 
     void Awake()
     {

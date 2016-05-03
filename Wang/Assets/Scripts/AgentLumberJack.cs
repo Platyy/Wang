@@ -75,8 +75,6 @@ public class AgentLumberJack : MonoBehaviour {
         {
             if (m_MyLerp.targetReached && !m_IsChopping)
             {
-                // Begin chopping wood?
-                
                 StartCoroutine(IChop(m_CurrentTile, m_MyChoice));
                 m_IsChopping = true;
             }
@@ -180,20 +178,29 @@ public class AgentLumberJack : MonoBehaviour {
         if(m_CurrentPine == m_InventorySize || m_CurrentNWood == m_InventorySize || _tileRes.m_NWoodDepleted || _tileRes.m_PineDepleted)
         {
             _currentTile.SetActive(false);
-            SetRDP();
+            
+            while(!SetRDP())
+            {
+                continue;
+            }
+
             ReturnToRDP();
             m_IsChopping = false;
             yield return null;
         }
     }
 
-    void SetRDP()
+    bool SetRDP()
     {
         if(m_MyRDP == null)
         {
             m_MyRDP = m_WangObject.FindRDP(transform.position);
-            m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks.Add(gameObject);
+            if(m_MyRDP == null)
+                m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks.Add(gameObject);
+                return true;
+            return false;
         }
+        return false;
     }
 
     void ReturnToRDP()
