@@ -20,10 +20,6 @@ public class Wang : MonoBehaviour
     public uint m_AgentAmount = 10;
     public uint m_BuilderAmount = 4;
     public GameObject m_Builder, m_Lumberjack, m_Miner;
-    [SerializeField]
-    private uint m_LumberjackAmount = 10;
-    [SerializeField]
-    private uint m_MinerAmount = 10;
 
     private bool m_FoundFirst = false;
     private int m_FoundCount = 0;

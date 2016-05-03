@@ -184,13 +184,16 @@ public class AgentMiner : MonoBehaviour {
         }
     }
 
-    void SetRDP()
+    bool SetRDP()
     {
         if (m_MyRDP == null)
         {
             m_MyRDP = m_WangObject.FindRDP(transform.position);
-            m_MyRDP.GetComponent<RDPManager>().m_Miners.Add(gameObject);
+            if (m_MyRDP != null)
+                m_MyRDP.GetComponent<RDPManager>().m_Miners.Add(gameObject);
+            return true;
         }
+        return false;
     }
 
     void ReturnToRDP()

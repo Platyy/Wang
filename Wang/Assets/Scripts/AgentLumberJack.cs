@@ -195,10 +195,9 @@ public class AgentLumberJack : MonoBehaviour {
         if(m_MyRDP == null)
         {
             m_MyRDP = m_WangObject.FindRDP(transform.position);
-            if(m_MyRDP == null)
+            if(m_MyRDP != null)
                 m_MyRDP.GetComponent<RDPManager>().m_Lumberjacks.Add(gameObject);
                 return true;
-            return false;
         }
         return false;
     }

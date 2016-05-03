@@ -73,48 +73,56 @@ public class AgentBuilder : MonoBehaviour {
     bool m_RDPPlaced = false;
     bool m_Moving = false;
 
-
     enum CurrentState
     {
         MOVINGTORDP,
         MOVINGTOTILE,
         RETURNINGTORDP,
         SEARCHINGFORRDP,
-        SEARCHINGFORTILE,
-        CONSTRUCTINGBUILDING,
-        WAITINGFORRESOURCES
+        FINDINGTILE,
+        MAKINGDECISION,
+        WAITING,
+        FINISHED,
     }
 
     CurrentState m_MyState;
 
     void Start()
     {
-        var _Wang    = GameObject.FindGameObjectWithTag("WangObject");
-        m_WangObject = _Wang.GetComponent<Wang>();
-        m_Seeker     = GetComponent<Seeker>();
-        m_Controller = GetComponent<CharacterController>();
-        m_MyLerp     = GetComponent<AILerp>();
-        m_MyState    = CurrentState.SEARCHINGFORRDP;
+        var _Wang        = GameObject.FindGameObjectWithTag("WangObject");
+        m_WangObject     = _Wang.GetComponent<Wang>();
+        m_Seeker         = GetComponent<Seeker>();
+        m_Controller     = GetComponent<CharacterController>();
+        m_MyLerp         = GetComponent<AILerp>();
+        m_MyState        = CurrentState.SEARCHINGFORRDP;
+        m_MyLerp.enabled = false;
     }
 
     void Update()
     {
         if (m_MyState == CurrentState.SEARCHINGFORRDP)
             FindRDPTile();
-        if (m_Seeker.IsDone() && m_MyState == CurrentState.MOVINGTORDP)
+        if (m_MyLerp.targetReached && m_MyState == CurrentState.MOVINGTORDP)
             PlaceRDP();
-        if(m_MyState == CurrentState.MOVINGTOTILE && m_Seeker.IsDone() && m_Moving)
+        if(m_MyState == CurrentState.MOVINGTOTILE && m_MyLerp.targetReached && m_Moving)
         {
             m_Moving = false;
             m_MyLerp.enabled = false;
-            m_MyState = CurrentState.CONSTRUCTINGBUILDING;
             Build(m_CurrentBuilding);
         }
-        if(m_MyState == CurrentState.WAITINGFORRESOURCES)
-            Choose();
-        if(m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP)
+
+        if(m_MyState == CurrentState.MOVINGTOTILE && !m_MyLerp.targetReached && m_Seeker.IsDone())
+            m_MyState = CurrentState.MOVINGTOTILE;
+
+        if(m_MyState == CurrentState.WAITING && m_MyState != CurrentState.MOVINGTOTILE)
+            StartCoroutine(Choose(1));
+
+        if (m_Seeker.IsDone())
         {
-            m_MyState = CurrentState.WAITINGFORRESOURCES;
+            if (!m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP)
+                m_MyState = CurrentState.RETURNINGTORDP;
+            else if (m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP)
+                m_MyState = CurrentState.WAITING;
         }
         Debug.Log(m_MyState);
     }
@@ -128,9 +136,10 @@ public class AgentBuilder : MonoBehaviour {
                 m_WangObject.CreateRDP(m_RDPTile);
                 m_MyRDP = m_WangObject.FindRDP(m_RDPTile.position);
                 m_RDPPlaced = true;
-                m_MyState = CurrentState.WAITINGFORRESOURCES;
+                m_MyLerp.StopAllCoroutines();
+                m_MyLerp.enabled = false;
+                m_MyState = CurrentState.WAITING;
             }
-            m_MyLerp.enabled = false;
         }
     }
 
@@ -143,12 +152,13 @@ public class AgentBuilder : MonoBehaviour {
             if (_found != null && !_found.GetComponent<TileResources>().m_HasBuilding)
             {
                 m_RDP = _found.transform.position;
+                m_MyLerp.enabled = true;
                 m_Seeker.StartPath(transform.position, _found.transform.position, OnPathComplete);
+                m_MyState = CurrentState.MOVINGTORDP;
 
                 _found.GetComponent<TileResources>().m_HasBuilding = true;
-                m_MyState = CurrentState.MOVINGTORDP;
-                m_Found = true;
                 m_RDPTile = _found.transform;
+                m_Found = true;
                 break;
             }
         }
@@ -165,52 +175,59 @@ public class AgentBuilder : MonoBehaviour {
 
     void ReturnToRDP()
     {
-        m_MyState = CurrentState.RETURNINGTORDP;
-        m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
         m_MyLerp.enabled = true;
+        m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
+        m_MyState = CurrentState.RETURNINGTORDP;
     }
     
     void FindBuildTile()
     {
-        m_MyState = CurrentState.SEARCHINGFORTILE;
-        bool _found = false;
-        if (m_Moving)
+        if (m_Moving || m_MyState == CurrentState.MOVINGTOTILE)
             return;
+        
+        bool _found = false;
+        m_MyState = CurrentState.FINDINGTILE;
 
-        int _loops = 0;
-        while (!_found && _loops < 100)
+        int[] _matsToFind = new int[] { 4, 7, 10, 13 };
+        GameObject[] _go = m_WangObject.FindCollection(transform.position, _matsToFind, 10);
+        for(int i = 0; i < _go.Length; i++)
         {
-            int[] _matsToFind = new int[] { 4, 7, 10, 13 };
-            GameObject[] _go = m_WangObject.FindCollection(transform.position, _matsToFind, 5);
-            for(int i = 0; i < _go.Length; i++)
+            if (_go[i] != null && !_go[i].GetComponent<TileResources>().m_HasBuilding)
             {
-                Debug.Log(_loops);
-                if (_go[i] != null && !_go[i].GetComponent<TileResources>().m_HasBuilding)
-                {
-                    m_Seeker.StartPath(transform.position, _go[i].transform.position, OnPathComplete);
-                    m_MyLerp.enabled = true;
-                    m_Moving = true;
-                    _found = true;
-                    _go[i].GetComponent<TileResources>().m_HasBuilding = true;
-                    m_BuildingTile = _go[i].transform.position;
-                    m_MyState = CurrentState.MOVINGTOTILE;
-                }
+                m_MyLerp.enabled = true;
+                m_Seeker.StartPath(transform.position, _go[i].transform.position, OnPathComplete);
+                m_Moving = true;
+                _found = true;
+                _go[i].GetComponent<TileResources>().m_HasBuilding = true;
+                m_BuildingTile = _go[i].transform.position;
+                m_MyState = CurrentState.MOVINGTOTILE;
+                break;
             }
-            _loops++;
         }
+        if(!_found)
+            m_MyState = CurrentState.FINISHED;
     }
 
     void Build(GameObject _selectedBuilding)
     {
-        if (_selectedBuilding != null && m_Seeker.IsDone())
+        if (_selectedBuilding != null && m_Seeker.IsDone() && m_MyLerp.targetReached && !m_Moving)
         {
+            m_MyLerp.StopAllCoroutines();
+            m_MyLerp.enabled = false;
             Instantiate(_selectedBuilding, new Vector3(m_BuildingTile.x, m_BuildingTile.y + 0.5f, m_BuildingTile.z), Quaternion.identity);
+            //m_CurrentBuilding = null;
+            Debug.Log("Built Thing");
             ReturnToRDP();
         }
     }
 
-    void Choose()
+    IEnumerator Choose(int _seconds)
     {
+        if (m_MyState == CurrentState.MOVINGTOTILE || m_Moving || m_MyState == CurrentState.RETURNINGTORDP)
+            yield break;
+
+        //Debug.Log("CHOOSING");
+        yield return new WaitForSeconds(_seconds);
         var _rdpMan = m_MyRDP.GetComponent<RDPManager>();
         int _minerAmount = _rdpMan.m_Miners.Count;
         int _lumberAmount = _rdpMan.m_Lumberjacks.Count;
@@ -237,17 +254,24 @@ public class AgentBuilder : MonoBehaviour {
             if (_slowMovers > _slowMiners)
             {
                 // MoveMineBuild
-                FindBuildTile();
+                yield return new WaitForSeconds(_seconds);
+
                 m_CurrentBuilding = m_MineMoveBuilding;
+                FindBuildTile();
+                yield break;
             }
             else if (_slowMovers < _slowMiners)
             {
                 // Build MineSpeed Upgrade
-                FindBuildTile();
+                yield return new WaitForSeconds(_seconds);
 
                 m_CurrentBuilding = m_MineSpeedBuilding;
+                FindBuildTile();
+                yield break;
+
             }
-            else return;
+            else yield return null;
+            yield return null;
         }
         else if (_minerAmount < _lumberAmount)
         {
@@ -272,18 +296,30 @@ public class AgentBuilder : MonoBehaviour {
             if (_slowMovers > _slowChoppers)
             {
                 // Build Move Upgrade
-                FindBuildTile();
+                yield return new WaitForSeconds(_seconds);
+
                 m_CurrentBuilding = m_ChopMoveBuilding;
-                
+                FindBuildTile();
+                yield break;
+
+
             }
             else if (_slowMovers < _slowChoppers)
             {
                 // Build Chop Upgrade
-                FindBuildTile();
+                yield return new WaitForSeconds(_seconds);
+
                 m_CurrentBuilding = m_ChopSpeedBuilding;
+                FindBuildTile();
+                yield break;
+
             }
-            else return;
+            else yield return null;
+            yield return null;
+
         }
-        else return;
+        else yield return null;
+        yield break;
+
     }
 }
