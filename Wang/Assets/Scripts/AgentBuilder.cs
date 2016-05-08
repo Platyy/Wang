@@ -100,47 +100,39 @@ public class AgentBuilder : MonoBehaviour {
 
     void Update()
     {
-        if (m_MyState == CurrentState.SEARCHINGFORRDP)
-            FindRDPTile();
-        if (m_MyLerp.targetReached && m_MyState == CurrentState.MOVINGTORDP)
-            PlaceRDP();
-        if(m_MyState == CurrentState.MOVINGTOTILE && m_MyLerp.targetReached && m_Moving)
+        // m_Seeker.IsDone() means a path has been calculated. m_MyLerp.targetReached returns true if the path has been traversed.
+
+        if (m_MyState == CurrentState.MAKINGDECISION) // If didn't make a decision, try again.
+            m_MyState = CurrentState.WAITING;
+
+        if (m_MyState == CurrentState.SEARCHINGFORRDP) // When starting, find a suitable tile to build RDP on.
+            FindRDPTile(); // Returns nearest suitable tile.
+
+        if (m_MyLerp.targetReached && m_MyState == CurrentState.MOVINGTORDP) // If I've reached that tile, build an RDP.
+            PlaceRDP(); // Places an RDP in world space.
+
+        if(m_MyState == CurrentState.WAITING && m_MyState != CurrentState.MOVINGTOTILE) // If I've built an RDP, make a decision on what building to construct.
+            StartCoroutine(Choose(10));
+
+        if(m_MyState == CurrentState.MOVINGTOTILE && !m_MyLerp.targetReached && m_Seeker.IsDone()) // If I'm moving to a tile, don't do anything else unless I'm finished.
+            m_MyState = CurrentState.MOVINGTOTILE;
+
+        if(m_MyState == CurrentState.MOVINGTOTILE && m_MyLerp.targetReached && m_Moving) // If I've finished moving to a tile construct a building.
         {
             m_Moving = false;
             m_MyLerp.enabled = false;
             Build(m_CurrentBuilding);
         }
 
-        if(m_MyState == CurrentState.MOVINGTOTILE && !m_MyLerp.targetReached && m_Seeker.IsDone())
-            m_MyState = CurrentState.MOVINGTOTILE;
-
-        if(m_MyState == CurrentState.WAITING && m_MyState != CurrentState.MOVINGTOTILE)
-            StartCoroutine(Choose(1));
 
         if (m_Seeker.IsDone())
         {
-            if (!m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP)
+            if (!m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP) // Don't do anything else if I'm returning to RDP.
                 m_MyState = CurrentState.RETURNINGTORDP;
-            else if (m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP)
+            else if (m_MyLerp.targetReached && m_MyState == CurrentState.RETURNINGTORDP) // If I've returned, make a new decision.
                 m_MyState = CurrentState.WAITING;
         }
         Debug.Log(m_MyState);
-    }
-
-    void PlaceRDP()
-    {
-        if (m_MyLerp.targetReached)
-        {
-            if (!m_RDPPlaced && m_MyRDP == null)
-            {
-                m_WangObject.CreateRDP(m_RDPTile);
-                m_MyRDP = m_WangObject.FindRDP(m_RDPTile.position);
-                m_RDPPlaced = true;
-                m_MyLerp.StopAllCoroutines();
-                m_MyLerp.enabled = false;
-                m_MyState = CurrentState.WAITING;
-            }
-        }
     }
 
     void FindRDPTile()
@@ -163,33 +155,132 @@ public class AgentBuilder : MonoBehaviour {
             }
         }
     }
-    
-    void OnPathComplete(Path p)
+
+    void PlaceRDP()
     {
-        Debug.Log("Error?: " + p.error);
-        if(!p.error)
+        if (m_MyLerp.targetReached)
         {
-            m_Path = p;
+            if (!m_RDPPlaced && m_MyRDP == null)
+            {
+                m_WangObject.CreateRDP(m_RDPTile);
+                m_MyRDP = m_WangObject.FindRDP(m_RDPTile.position);
+                m_RDPPlaced = true;
+                m_MyLerp.StopAllCoroutines();
+                m_MyLerp.enabled = false;
+                m_MyState = CurrentState.WAITING;
+            }
         }
     }
-
-    void ReturnToRDP()
-    {
-        m_MyLerp.enabled = true;
-        m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
-        m_MyState = CurrentState.RETURNINGTORDP;
-    }
     
+    IEnumerator Choose(int _seconds)
+    {
+        if (m_MyState == CurrentState.MOVINGTOTILE || m_Moving || m_MyState == CurrentState.RETURNINGTORDP)
+            yield break;
+
+        m_MyState = CurrentState.MAKINGDECISION;
+        yield return new WaitForSeconds(_seconds); // Makes it so this code only runs x times per second.
+        
+        var _rdpMan = m_MyRDP.GetComponent<RDPManager>();
+        int _minerAmount = _rdpMan.m_Miners.Count;
+        int _lumberAmount = _rdpMan.m_Lumberjacks.Count;
+        if (_minerAmount > _lumberAmount)
+        { // More Miners
+            int _slowMovers = 0, _regMovers = 0, _fastMovers = 0, _slowMiners = 0, _regMiners = 0, _fastMiners = 0;
+            for (int i = 0; i < _rdpMan.m_Miners.Count; i++)
+            {
+                var _miner = _rdpMan.m_Miners[i].GetComponent<AgentMiner>();
+                if (_miner.m_MovSpeed > 2.0f)
+                    _fastMovers++;
+                else if (_miner.m_MovSpeed > 0.75f)
+                    _regMovers++;
+                else
+                    _slowMovers++;
+
+                if (_miner.m_MineSpeed > 0.4f)
+                    _fastMiners++;
+                else if (_miner.m_MineSpeed > 0.2f)
+                    _regMiners++;
+                else
+                    _slowMiners++;
+            }
+            if (_slowMovers > _slowMiners)
+            {
+                // MoveMineBuild
+
+                m_CurrentBuilding = m_MineMoveBuilding;
+                FindBuildTile();
+                yield break;
+            }
+            else if (_slowMovers < _slowMiners)
+            {
+                // Build MineSpeed Upgrade
+
+                m_CurrentBuilding = m_MineSpeedBuilding;
+                FindBuildTile();
+                yield break;
+
+            }
+            yield return null;
+        }
+        else if (_minerAmount < _lumberAmount)
+        {
+            int _slowMovers = 0, _regMovers = 0, _fastMovers = 0, _slowChoppers = 0, _regChoppers = 0, _fastChoppers = 0;
+            for (int i = 0; i < _rdpMan.m_Lumberjacks.Count; i++)
+            {
+                var _lumber = _rdpMan.m_Lumberjacks[i].GetComponent<AgentLumberJack>();
+                if (_lumber.m_MovSpeed > 2.0f)
+                    _fastMovers++;
+                else if (_lumber.m_MovSpeed > 0.75f)
+                    _regMovers++;
+                else
+                    _slowMovers++;
+
+                if (_lumber.m_ChopSpeed > 0.4f)
+                    _fastChoppers++;
+                else if (_lumber.m_ChopSpeed > 0.2f)
+                    _regChoppers++;
+                else
+                    _slowChoppers++;
+            }
+            if (_slowMovers > _slowChoppers)
+            {
+                // Build Move Upgrade
+
+                m_CurrentBuilding = m_ChopMoveBuilding;
+                FindBuildTile();
+                yield break;
+
+
+            }
+            else if (_slowMovers < _slowChoppers)
+            {
+                // Build Chop Upgrade
+
+                m_CurrentBuilding = m_ChopSpeedBuilding;
+                FindBuildTile();
+                yield break;
+
+            }
+            yield return null;
+
+        }
+        yield break;
+
+    }
+
     void FindBuildTile()
     {
         if (m_Moving || m_MyState == CurrentState.MOVINGTOTILE)
             return;
         
         bool _found = false;
+
         m_MyState = CurrentState.FINDINGTILE;
 
         int[] _matsToFind = new int[] { 4, 7, 10, 13 };
-        GameObject[] _go = m_WangObject.FindCollection(transform.position, _matsToFind, 10);
+
+        GameObject[] _go = m_WangObject.FindCollection(transform.position, _matsToFind, 5);
+
         for(int i = 0; i < _go.Length; i++)
         {
             if (_go[i] != null && !_go[i].GetComponent<TileResources>().m_HasBuilding)
@@ -221,105 +312,20 @@ public class AgentBuilder : MonoBehaviour {
         }
     }
 
-    IEnumerator Choose(int _seconds)
+    void ReturnToRDP()
     {
-        if (m_MyState == CurrentState.MOVINGTOTILE || m_Moving || m_MyState == CurrentState.RETURNINGTORDP)
-            yield break;
-
-        //Debug.Log("CHOOSING");
-        yield return new WaitForSeconds(_seconds);
-        var _rdpMan = m_MyRDP.GetComponent<RDPManager>();
-        int _minerAmount = _rdpMan.m_Miners.Count;
-        int _lumberAmount = _rdpMan.m_Lumberjacks.Count;
-        if (_minerAmount > _lumberAmount)
-        { // More Miners
-            int _slowMovers = 0, _regMovers = 0, _fastMovers = 0, _slowMiners = 0, _regMiners = 0, _fastMiners = 0;
-            for (int i = 0; i < _rdpMan.m_Miners.Count; i++)
-            {
-                var _miner = _rdpMan.m_Miners[i].GetComponent<AgentMiner>();
-                if (_miner.m_MovSpeed > 2.0f)
-                    _fastMovers++;
-                else if (_miner.m_MovSpeed > 0.75f)
-                    _regMovers++;
-                else
-                    _slowMovers++;
-
-                if (_miner.m_MineSpeed > 0.4f)
-                    _fastMiners++;
-                else if (_miner.m_MineSpeed > 0.2f)
-                    _regMiners++;
-                else
-                    _slowMiners++;
-            }
-            if (_slowMovers > _slowMiners)
-            {
-                // MoveMineBuild
-                yield return new WaitForSeconds(_seconds);
-
-                m_CurrentBuilding = m_MineMoveBuilding;
-                FindBuildTile();
-                yield break;
-            }
-            else if (_slowMovers < _slowMiners)
-            {
-                // Build MineSpeed Upgrade
-                yield return new WaitForSeconds(_seconds);
-
-                m_CurrentBuilding = m_MineSpeedBuilding;
-                FindBuildTile();
-                yield break;
-
-            }
-            else yield return null;
-            yield return null;
-        }
-        else if (_minerAmount < _lumberAmount)
-        {
-            int _slowMovers = 0, _regMovers = 0, _fastMovers = 0, _slowChoppers = 0, _regChoppers = 0, _fastChoppers = 0;
-            for (int i = 0; i < _rdpMan.m_Lumberjacks.Count; i++)
-            {
-                var _lumber = _rdpMan.m_Lumberjacks[i].GetComponent<AgentLumberJack>();
-                if (_lumber.m_MovSpeed > 2.0f)
-                    _fastMovers++;
-                else if (_lumber.m_MovSpeed > 0.75f)
-                    _regMovers++;
-                else
-                    _slowMovers++;
-
-                if (_lumber.m_ChopSpeed > 0.4f)
-                    _fastChoppers++;
-                else if (_lumber.m_ChopSpeed > 0.2f)
-                    _regChoppers++;
-                else
-                    _slowChoppers++;
-            }
-            if (_slowMovers > _slowChoppers)
-            {
-                // Build Move Upgrade
-                yield return new WaitForSeconds(_seconds);
-
-                m_CurrentBuilding = m_ChopMoveBuilding;
-                FindBuildTile();
-                yield break;
-
-
-            }
-            else if (_slowMovers < _slowChoppers)
-            {
-                // Build Chop Upgrade
-                yield return new WaitForSeconds(_seconds);
-
-                m_CurrentBuilding = m_ChopSpeedBuilding;
-                FindBuildTile();
-                yield break;
-
-            }
-            else yield return null;
-            yield return null;
-
-        }
-        else yield return null;
-        yield break;
-
+        m_MyLerp.enabled = true;
+        m_Seeker.StartPath(transform.position, m_RDP, OnPathComplete);
+        m_MyState = CurrentState.RETURNINGTORDP;
     }
+    
+    void OnPathComplete(Path p)
+    {
+        Debug.Log("Error?: " + p.error);
+        if(!p.error)
+        {
+            m_Path = p;
+        }
+    }
+
 }
