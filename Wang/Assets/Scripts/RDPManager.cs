@@ -11,5 +11,4 @@ public class RDPManager : MonoBehaviour {
     public List<GameObject> m_Miners, m_Lumberjacks;
     
     public uint m_PineAmount = 0, m_WoodAmount = 0, m_StoneAmount = 0, m_IronAmount = 0;
-    private Vector3 m_Position;
 }

@@ -181,7 +181,7 @@ public class AgentLumberJack : MonoBehaviour {
             
             while(!SetRDP())
             {
-                continue;
+                yield return new WaitForSeconds(3);
             }
 
             ReturnToRDP();

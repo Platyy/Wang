@@ -298,7 +298,7 @@ public class Wang : MonoBehaviour
         {
             Instantiate(m_Builder, new Vector3(Random.Range(1, 51), m_Builder.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
         }
-        for (int i = 0; i < m_AgentAmount; i++)
+        for (int i = 0; i < m_AgentAmount + 1; i++)
         {
             Instantiate(m_Lumberjack, new Vector3(Random.Range(1, 51), m_Lumberjack.transform.position.y, Random.Range(0, -50)), Quaternion.identity);
         }
